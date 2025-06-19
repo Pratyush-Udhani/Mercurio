@@ -1,36 +1,58 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# === Frontend (Next.js) ===
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
 
 # testing
-/coverage
+/frontend/coverage
 
 # next.js
-/.next/
-/out/
+/frontend/.next/
+/frontend/out/
 
 # production
-/build
+/frontend/build
 
 # misc
 .DS_Store
 *.pem
 
-# debug
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pip-log.txt
 
 # local env files
 .env*.local
 .env
 
 # vercel
-.vercel
+/frontend/.vercel
 
 # typescript
-*.tsbuildinfo
-next-env.d.ts
+/frontend/*.tsbuildinfo
+/frontend/next-env.d.ts
+
+# === Backend (FastAPI) ===
+/backend/__pycache__/
+/backend/*.py[cod]
+/backend/.pytest_cache/
+/backend/.mypy_cache/
+/backend/instance/
+/backend/.venv/
+/backend/venv/
+/backend/env/
+/backend/.env
+/backend/.env.*
+
+# virtual environment (if in root)
+.venv/
+env/
+venv/
+
+# pyright / IDE config
+pyrightconfig.json
+.vscode/
+.idea/
+
