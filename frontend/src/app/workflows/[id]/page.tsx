@@ -29,6 +29,11 @@ export default function Page() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
 
+  const [videoUrls, setVideoUrls] = useState<{
+    vertical: string | null;
+    horizontal: string | null;
+  }>({ vertical: null, horizontal: null });
+
   useEffect(() => {
     if (id) {
       getWorkflow(id as string);
@@ -87,9 +92,11 @@ export default function Page() {
           script: workflow.llm_scripts[selectedScript],
         }),
       });
-      const data = await resp.json();
+      const data: { vertical: string; horizontal: string; error } =
+        await resp.json();
+
       if (resp.ok) {
-        setVideoUrl(data.url);
+        setVideoUrls({ vertical: data.vertical, horizontal: data.horizontal });
         setTimeout(() => {
           document
             .getElementById("video-player")
@@ -211,12 +218,18 @@ export default function Page() {
                 </Button>
 
                 {/* Centered video player */}
-                {videoUrl && (
-                  <div className="mt-6 flex justify-center">
+
+                {videoUrls.vertical && videoUrls.horizontal && (
+                  <div className="mt-6 flex flex-col md:flex-row gap-6 justify-center">
                     <video
-                      src={videoUrl}
+                      src={videoUrls.vertical}
                       controls
-                      className="w-full max-w-[320px] md:max-w-[400px] lg:max-w-[480px] rounded-lg shadow-lg"
+                      className="w-full max-w-[270px] md:max-w-[320px] rounded-lg shadow-lg"
+                    />
+                    <video
+                      src={videoUrls.horizontal}
+                      controls
+                      className="w-full max-w-[700px] md:max-w-[540px] rounded-lg shadow-lg"
                     />
                   </div>
                 )}

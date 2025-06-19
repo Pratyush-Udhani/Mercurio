@@ -152,15 +152,29 @@ export const Video: React.FC<{
 /* ------------------------------------------------------------------ */
 
 export const RemotionRoot: React.FC = () => (
-  <Composition
-    id="Video"
-    component={Video}
-    durationInFrames={30 * 30}
-    fps={30}
-    width={1080}
-    height={1920}
-    defaultProps={{ images: [], script: "" }}
-  />
+  <>
+    {/* 9:16 vertical 1080 × 1920 */}
+    <Composition
+      id="VideoVertical"
+      component={Video}
+      durationInFrames={30 * 30}
+      fps={30}
+      width={1080}
+      height={1920}
+      defaultProps={{ images: [], script: "" }}
+    />
+
+    {/* 16:9 horizontal 1920 × 1080 */}
+    <Composition
+      id="VideoHorizontal"
+      component={Video}
+      durationInFrames={30 * 30}
+      fps={30}
+      width={1920}
+      height={1080}
+      defaultProps={{ images: [], script: "" }}
+    />
+  </>
 );
 
 registerRoot(RemotionRoot);
