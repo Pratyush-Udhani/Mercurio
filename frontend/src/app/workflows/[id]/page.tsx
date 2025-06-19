@@ -10,16 +10,18 @@ import { toast } from "sonner";
 
 import { useGetWorkflow } from "@/hooks/useGetWorkflow";
 import { useGenerateScripts } from "@/hooks/useGenerateScripts";
+import { useWorkflowStore } from "@/stores/useWorkflowStore";
 
 export default function Page() {
   const { id } = useParams();
-  const { data: workflow, loading, error, getWorkflow } = useGetWorkflow();
+  const { loadingGet, errorGet, getWorkflow } = useGetWorkflow();
   const {
-    result: result,
-    loading: loadingCreating,
-    error: errorCreating,
+    loadingCr: loadingCr,
+    errorCr: errorCr,
     generateScripts: generateScripts,
   } = useGenerateScripts();
+
+  const { workflow, setWorkflow } = useWorkflowStore((state) => state);
 
   useEffect(() => {
     if (id) {
@@ -27,22 +29,20 @@ export default function Page() {
     }
   }, [id, getWorkflow]);
 
-  if (loading) {
+  if (loadingGet) {
     return <div className="p-8">Loading workflow...</div>;
   }
 
-  if (error || !workflow) {
-    return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (errorGet || !workflow) {
+    return <div className="p-8 text-red-500">Error: {errorGet}</div>;
   }
-
-  const { product_name, product_description, images } = workflow.product;
 
   const handleGenerate = async () => {
     try {
       await generateScripts(workflow);
       toast.success("Script generated successfully!");
     } catch {
-      toast.error(`Failed: ${errorCreating}`);
+      toast.error(`Failed: ${errorCr}`);
     }
   };
 
@@ -56,7 +56,7 @@ export default function Page() {
           </Label>
           <Input
             id="name"
-            defaultValue={product_name}
+            defaultValue={workflow.product.product_name}
             className="mt-1 w-full"
           />
         </div>
@@ -68,7 +68,7 @@ export default function Page() {
           </Label>
           <Textarea
             id="description"
-            defaultValue={product_description}
+            defaultValue={workflow.product.product_description}
             rows={8}
             className="mt-1 w-full"
           />
@@ -78,11 +78,11 @@ export default function Page() {
         <div>
           <Label className="text-cyan-500">Images</Label>
           <div className="mt-2 flex space-x-4 overflow-x-auto">
-            {images.map((src) => (
+            {workflow.product.images.map((src) => (
               <img
                 key={src}
                 src={src}
-                alt={product_name}
+                alt={workflow.product.product_name}
                 className="h-50 w-auto rounded-lg shadow-sm"
               />
             ))}
@@ -91,10 +91,10 @@ export default function Page() {
 
         <Button
           onClick={handleGenerate}
-          disabled={loadingCreating}
+          disabled={loadingCr}
           className="w-full hover:cursor-pointer"
         >
-          {loading ? "Generating..." : "Generate LLM Script"}
+          {loadingCr ? "Generating..." : "Generate LLM Script"}
         </Button>
       </div>
     </div>
