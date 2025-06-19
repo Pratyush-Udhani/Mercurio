@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,9 @@ export default function Page() {
   const { workflow, setWorkflow, selectedScript, setSelectedScript } =
     useWorkflowStore((state) => state);
   const { updateWorkflow } = useUpdateWorkflow();
+
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [rendering, setRendering] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -68,6 +71,38 @@ export default function Page() {
       toast.error("Failed to remove image");
       // revert local state on failure
       setWorkflow(workflow);
+    }
+  };
+
+  const handleRenderVideo = async () => {
+    if (selectedScript === null) return;
+    setRendering(true);
+    try {
+      const resp = await fetch("/api/render-video", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uuid: workflow.uuid,
+          images: workflow.product.images,
+          script: workflow.llm_scripts[selectedScript],
+        }),
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        setVideoUrl(data.url);
+        setTimeout(() => {
+          document
+            .getElementById("video-player")
+            ?.scrollIntoView({ behavior: "smooth" });
+        }, 0);
+        toast.success("Video ready!");
+      } else {
+        throw new Error(data.error || "Render failed");
+      }
+    } catch (e: any) {
+      toast.error(`Video render failed: ${e.message}`);
+    } finally {
+      setRendering(false);
     }
   };
 
@@ -166,12 +201,25 @@ export default function Page() {
               </div>
               <div className="mt-4">
                 <Button
-                  onClick={() => {}}
-                  disabled={selectedScript == null ? true : false}
+                  onClick={handleRenderVideo}
+                  disabled={
+                    (selectedScript == null ? true : false) || rendering
+                  }
                   className="w-full hover:cursor-pointer"
                 >
-                  Generate Video
+                  {rendering ? "Rendering" : "Generate Video"}
                 </Button>
+
+                {/* Centered video player */}
+                {videoUrl && (
+                  <div className="mt-6 flex justify-center">
+                    <video
+                      src={videoUrl}
+                      controls
+                      className="w-full max-w-[320px] md:max-w-[400px] lg:max-w-[480px] rounded-lg shadow-lg"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
