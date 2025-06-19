@@ -20,12 +20,37 @@ With just one press of a button, you can generate four different advertisement p
 And finally after selecting the prompt you preper, using Remotion, two videos will be generated with the text overlay. 
 
 
-
 https://github.com/user-attachments/assets/7076ae1d-e8c1-4b12-bd52-8e16fdf1e534
 
 
 https://github.com/user-attachments/assets/90777422-17ab-44a1-9470-d8f8075d9eee
 
+
+### Steps to Run Locally
+
+#### Frontend
+
+```bash
+cd frontend
+cp env.example .env.local
+pnpm i 
+pnpm run dev
+```
+
+#### Backend
+
+```bash
+cd backend
+pyenv virtualenv 3.12 mercurio-env
+pyenv activate mercurio-env
+pip install -r requirements.txt
+
+# Enter DB_URL and OPENAI_KEY
+cp env.exaple .env
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+The generated videos will be stored in `frontend/public/videos/` in the format `uuid-horizontal.mp4` and `uuid-vertical.no4`.
 
 
 
