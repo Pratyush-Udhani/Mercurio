@@ -1,0 +1,21 @@
+# prompt_templates.yaml
+
+# A map of variation name → prompt template
+ad_variations:
+  excited: |
+    Write a 20-second ad dialogue script for "{{ name }}". Express how excited
+    you are to use this product because you can accomplish all the things mentioned
+    in the {{ description }}.
+
+  professional: |
+    Write a professional 20-second ad dialoge script for "{{ name }}" showcasing it's features
+    listed in {{ description }}. Highlight the points that make this a product worth 
+    investing.
+
+  casual: |
+    Write a casual 20-second ad dialogue script as in you're telling your friend about "{{ name }}".
+    Keep hinting on the features of the product in the script based on the {{ description }}.
+
+  technical: |
+    Write a techinal 20-second ad dialogue script for product {{ name }} highlighting it's core 
+    features and usecases taking in details from {{ description }}.

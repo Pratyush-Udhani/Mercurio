@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.db.session import get_session
 from app.db.models import WorkflowTable
+from app.models import product
 from app.models.workflow import Workflow
 from app.models.product import ProductInfo
+from app.core.logger import logger
 
 from app.services.llm_script import generate_scripts
 
@@ -41,20 +43,32 @@ def read_workflow(
 @router.post("/{workflow_id}/generate-scripts", response_model=Workflow)
 async def generate_scripts_endpoint(
     workflow: Workflow,
-    session: Session = Depends(get_session),
+    db: Session = Depends(get_session),
 ):
     """
     POST /workflows/{id}/generate-scripts
     Body: { uuid, product: { … } }
-    Returns: Workflow with a list of LLM scripts
+    Returns: status_code
     """
 
-    db_obj = session.get(WorkflowTable, workflow.uuid)
+    db_obj = db.get(WorkflowTable, workflow.uuid)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Workflow not found")
+
     try:
         result = await generate_scripts(workflow)
-        return result
+        db_obj.product_name = workflow.product.product_name
+        db_obj.product_description = workflow.product.product_description
+        db_obj.llm_scripts = result
+        db.commit()
+        db.refresh(db_obj)
+
+        return Workflow(
+            uuid=db_obj.uuid,
+            product=workflow.product,
+            llm_scripts=result,
+        )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,

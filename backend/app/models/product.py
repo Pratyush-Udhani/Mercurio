@@ -3,7 +3,7 @@ from typing import List
 
 class ProductInfo(BaseModel):
     """
-    Prduct Info scraped from amazon
+    Product Info scraped from amazon
     - product_name
     - product_description: taken from About the Product section
     - images: list of main and alt images of the product
