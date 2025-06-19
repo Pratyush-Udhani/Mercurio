@@ -25,6 +25,7 @@ https://github.com/user-attachments/assets/7076ae1d-e8c1-4b12-bd52-8e16fdf1e534
 
 https://github.com/user-attachments/assets/90777422-17ab-44a1-9470-d8f8075d9eee
 
+> More examples available in `frontend/public/videos`.
 
 ### Steps to Run Locally
 
