@@ -7,5 +7,5 @@ export type Product = {
 export type Workflow = {
   uuid: string;
   product: Product;
-  llm_scripts: Record<string, string> | null;
+  llm_scripts: Record<string, string>[] | null;
 };

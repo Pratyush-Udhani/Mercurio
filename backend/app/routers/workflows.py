@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session
 from app.db.session import get_session
 from app.db.models import WorkflowTable
@@ -36,12 +36,34 @@ def read_workflow(
         images=db_obj.images,
     )
 
-    return Workflow(uuid=db_obj.uuid, product=product)
+    return Workflow(uuid=db_obj.uuid, product=product, llm_scripts=db_obj.llm_scripts)
 
+@router.put("/{workflow_id}/update", status_code=status.HTTP_200_OK)
+def update_workflow(
+    workflow_id: UUID,
+    workflow: Workflow,
+    db: Session = Depends(get_session),
+):
+    """
+    Takes in workflow as body and updates
+    """
+    db_obj = db.get(WorkflowTable, workflow_id)
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+
+    # Update each field you allow changed
+    db_obj.product_name        = workflow.product.product_name
+    db_obj.product_description = workflow.product.product_description
+    db_obj.images              = workflow.product.images
+    db.commit()
+    db.refresh(db_obj)
+
+    return {"detail": "OK"}
 
 
 @router.post("/{workflow_id}/generate-scripts", response_model=Workflow)
 async def generate_scripts_endpoint(
+    workflow_id: UUID,
     workflow: Workflow,
     db: Session = Depends(get_session),
 ):

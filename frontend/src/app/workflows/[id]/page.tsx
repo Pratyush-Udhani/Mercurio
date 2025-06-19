@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useGetWorkflow } from "@/hooks/useGetWorkflow";
 import { useGenerateScripts } from "@/hooks/useGenerateScripts";
 import { useWorkflowStore } from "@/stores/useWorkflowStore";
+import { useUpdateWorkflow } from "@/hooks/useUpdateWorkflow";
 
 export default function Page() {
   const { id } = useParams();
@@ -21,7 +22,9 @@ export default function Page() {
     generateScripts: generateScripts,
   } = useGenerateScripts();
 
-  const { workflow, setWorkflow } = useWorkflowStore((state) => state);
+  const { workflow, setWorkflow, selectedScript, setSelectedScript } =
+    useWorkflowStore((state) => state);
+  const { updateWorkflow } = useUpdateWorkflow();
 
   useEffect(() => {
     if (id) {
@@ -43,6 +46,28 @@ export default function Page() {
       toast.success("Script generated successfully!");
     } catch {
       toast.error(`Failed: ${errorCr}`);
+    }
+  };
+
+  const handleRemoveImage = async (srcToRemove: string) => {
+    // 1️⃣ remove locally
+    const newImages = workflow.product.images.filter(
+      (src) => src !== srcToRemove,
+    );
+    const updated = {
+      ...workflow,
+      product: { ...workflow.product, images: newImages },
+    };
+    setWorkflow(updated);
+
+    // 2️⃣ call backend
+    try {
+      await updateWorkflow(updated);
+      toast.success("Image removed");
+    } catch (e) {
+      toast.error("Failed to remove image");
+      // revert local state on failure
+      setWorkflow(workflow);
     }
   };
 
@@ -77,14 +102,24 @@ export default function Page() {
         {/* Images */}
         <div>
           <Label className="text-cyan-500">Images</Label>
-          <div className="mt-2 flex space-x-4 overflow-x-auto">
+          <div className="mt-3 flex flex-row space-x-4 overflow-x-scroll">
             {workflow.product.images.map((src) => (
-              <img
-                key={src}
-                src={src}
-                alt={workflow.product.product_name}
-                className="h-50 w-auto rounded-lg shadow-sm"
-              />
+              <div key={src} className="relative group min-w-fit">
+                <img
+                  src={src}
+                  alt={workflow.product.product_name}
+                  className="h-50 rounded-lg shadow-sm"
+                />
+                <button
+                  onClick={() => handleRemoveImage(src)}
+                  className="absolute top-1 right-1 group-hover:block 
+                            bg-cyan-500 bg-opacity-75 rounded-full px-1 
+                            hover:bg-red-500 hover:text-white hover:cursor-pointer transition"
+                  aria-label="Remove image"
+                >
+                  x
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -96,6 +131,50 @@ export default function Page() {
         >
           {loadingCr ? "Generating..." : "Generate LLM Script"}
         </Button>
+
+        {/* LLM Script Cards */}
+        {workflow.llm_scripts &&
+          Object.keys(workflow.llm_scripts).length > 0 && (
+            <div>
+              <div className="mt-4 overflow-x-auto cursor-pointer">
+                <div className="flex space-x-4 pb-2">
+                  {Object.entries(workflow.llm_scripts).map(
+                    ([variation, script]) => {
+                      const isSelected = selectedScript === variation;
+                      return (
+                        <div
+                          key={variation}
+                          onClick={() => setSelectedScript(variation)}
+                          className={`min-w-[280px] max-w-[280px] flex-shrink-0 rounded-xl border p-4 shadow-sm
+                          ${
+                            isSelected
+                              ? "bg-cyan-50 dark:bg-gray-800 border-cyan-500"
+                              : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          <h3 className="mb-2 font-semibold text-cyan-600 capitalize">
+                            {variation}
+                          </h3>
+                          <p className="text-sm whitespace-pre-line leading-relaxed">
+                            {script}
+                          </p>
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
+              </div>
+              <div className="mt-4">
+                <Button
+                  onClick={() => {}}
+                  disabled={selectedScript == null ? true : false}
+                  className="w-full hover:cursor-pointer"
+                >
+                  Generate Video
+                </Button>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );
