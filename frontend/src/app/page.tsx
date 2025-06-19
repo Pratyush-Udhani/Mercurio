@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -9,7 +10,15 @@ import { useUrlScraper } from "@/hooks/useUrlScaper";
 
 export default function Page() {
   const [url, setUrl] = useState("");
+  const router = useRouter();
   const { data, loading, error, scrape } = useUrlScraper();
+
+  // Redirect to workflow page when UUID is received
+  useEffect(() => {
+    if (data?.uuid) {
+      router.push(`/workflows/${data.uuid}`);
+    }
+  }, [data, router]);
 
   const handleScrape = () => {
     if (!url.trim()) {
@@ -20,14 +29,14 @@ export default function Page() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-white text-white p-4">
+    <div className="h-screen flex flex-col items-center justify-center p-4">
       <Toaster />
       <div className="w-full max-w-md space-y-4">
         <Input
           placeholder="Enter product URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          className="border-black placeholder-gray-400 text-black"
+          className=""
         />
         <Button
           onClick={handleScrape}
@@ -39,11 +48,6 @@ export default function Page() {
       </div>
 
       {error && <p className="mt-4 text-red-400">{error}</p>}
-      {data && (
-        <pre className="mt-4 max-w-md w-full bg-gray-800 p-4 rounded">
-          {JSON.stringify(data, null, 2)}
-        </pre>
-      )}
     </div>
   );
 }
