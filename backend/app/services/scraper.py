@@ -22,7 +22,6 @@ async def scrape_amazon(url: str) -> ProductInfo:
             # Extract title
             title = await page.text_content("#productTitle") or ""
             # Extract description (fallback to bullet-points if needed)
-            desc = await page.text_content("#productDescription")
             bullets = await page.eval_on_selector_all(
                 "#feature-bullets ul li span", "els => els.map(el => el.textContent.trim())"
             )

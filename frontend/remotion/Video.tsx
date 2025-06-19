@@ -1,97 +1,166 @@
 import React from "react";
 import {
-  Composition,
-  useCurrentFrame,
-  interpolate,
-  spring,
-  Easing,
+  AbsoluteFill,
+  Img,
   Sequence,
-  staticFile,
+  Composition,
+  interpolate,
+  useCurrentFrame,
 } from "remotion";
-import { AbsoluteFill, Img } from "remotion";
+import { registerRoot } from "remotion";
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+
+// Split the paragraph into ~max‑char chunks without cutting mid‑word
+const chunkByChars = (text: string, max = 100) => {
+  const words = text.split(/\s+/);
+  const chunks: string[] = [];
+  let current = "";
+  for (const w of words) {
+    const tentative = current ? `${current} ${w}` : w;
+    if (tentative.length > max) {
+      if (current) chunks.push(current);
+      current = w; // start a new chunk
+    } else {
+      current = tentative;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+};
+
+const Caption: React.FC<{ text: string; duration: number }> = ({
+  text,
+  duration,
+}) => {
+  const frame = useCurrentFrame(); // 0 ➜ duration
+
+  const opacity = interpolate(
+    frame,
+    [0, duration * 0.15, duration * 0.85, duration],
+    [0, 1, 1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  const translateY = interpolate(frame, [0, duration * 0.15], [50, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 180,
+        width: "100%",
+        display: "flex",
+        justifyContent: "center",
+        opacity,
+        transform: `translateY(${translateY}px)`,
+      }}
+    >
+      <div
+        style={{
+          background: "#000", // solid black bar
+          padding: "14px 28px",
+          borderRadius: 14,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 64,
+            fontWeight: 700,
+            fontFamily: "sans-serif",
+            color: "#fff",
+            lineHeight: 1.3,
+            WebkitTextStroke: "3px #000",
+            textShadow: "0 0 8px rgba(0,0,0,0.8)",
+            display: "inline-block",
+          }}
+        >
+          {text}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/* Main video component                                               */
+/* ------------------------------------------------------------------ */
 
 export const Video: React.FC<{
   images: string[];
   script: string;
 }> = ({ images, script }) => {
-  const frame = useCurrentFrame();
-  const durationInFrames = 20 * 30; // 20s × 30fps
+  const fps = 30;
+  const totalDuration = fps * 30; // 30 s
 
-  // Text‐reveal: split on words and reveal word by word
-  const words = script.split(" ");
-  const wordsToShow = Math.min(
-    words.length,
-    Math.floor(interpolate(frame, [0, durationInFrames], [0, words.length])),
-  );
+  // caption timing
+  const chunks = chunkByChars(script, 100);
+  const captionDur = Math.floor(totalDuration / chunks.length);
 
-  // Duration per image
-  const perImage = Math.floor(durationInFrames / images.length);
+  // image timing
+  const imgDur = Math.floor(totalDuration / images.length);
+  const globalFrame = useCurrentFrame();
 
   return (
     <>
-      {/* Sequence each image with a fade transition */}
-      {images.map((img, idx) => {
-        const start = idx * perImage;
-        return (
-          <Sequence from={start} durationInFrames={perImage} key={idx}>
-            <AbsoluteFill style={{ backgroundColor: "#000" }}>
-              <Img
-                src={img}
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  transform: `scale(${interpolate(
-                    frame - start,
-                    [0, perImage],
-                    [1.1, 1],
-                    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
-                  )})`,
-                  opacity: interpolate(
-                    frame - start,
-                    [0, perImage * 0.1, perImage * 0.9, perImage],
-                    [0, 1, 1, 0],
-                    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
-                  ),
-                }}
-              />
-            </AbsoluteFill>
-          </Sequence>
-        );
-      })}
+      {/* Image sequences */}
+      {images.map((img, idx) => (
+        <Sequence from={idx * imgDur} durationInFrames={imgDur} key={idx}>
+          <AbsoluteFill>
+            <Img
+              src={img}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                transform: `scale(${interpolate(
+                  globalFrame - idx * imgDur,
+                  [0, imgDur],
+                  [1.1, 1],
+                )})`,
+                opacity: interpolate(
+                  globalFrame - idx * imgDur,
+                  [0, imgDur * 0.15, imgDur * 0.85, imgDur],
+                  [0, 1, 1, 0],
+                ),
+              }}
+            />
+          </AbsoluteFill>
+        </Sequence>
+      ))}
 
-      {/* Text overlay */}
-      <AbsoluteFill
-        style={{
-          justifyContent: "center",
-          alignItems: "flex-end",
-          padding: 40,
-        }}
-      >
-        <p style={{ fontSize: 32, color: "white", lineHeight: 1.2 }}>
-          {words.slice(0, wordsToShow).join(" ")}
-        </p>
-      </AbsoluteFill>
+      {/* Caption sequences */}
+      {chunks.map((txt, idx) => (
+        <Sequence
+          from={idx * captionDur}
+          durationInFrames={captionDur}
+          key={idx}
+        >
+          <Caption text={txt} duration={captionDur} />
+        </Sequence>
+      ))}
     </>
   );
 };
 
-// Register the composition
+/* ------------------------------------------------------------------ */
+/* Register composition                                               */
+/* ------------------------------------------------------------------ */
+
 export const RemotionRoot: React.FC = () => (
   <Composition
     id="Video"
     component={Video}
-    durationInFrames={20 * 30}
+    durationInFrames={30 * 30}
     fps={30}
     width={1080}
     height={1920}
-    defaultProps={{
-      images: [],
-      script: "",
-    }}
+    defaultProps={{ images: [], script: "" }}
   />
 );
-
-import { registerRoot } from "remotion";
 
 registerRoot(RemotionRoot);
